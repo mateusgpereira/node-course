@@ -1,6 +1,8 @@
 const path = require('path')
 const express = require('express')
 const hbs = require('hbs')
+const geocode = require('./utils/geocode')
+const forecast = require('./utils/forecast')
 
 const publicDirectoryPath = path.join(__dirname, '../public')
 const viewsPath = path.join(__dirname, '../templates/views')
@@ -47,10 +49,27 @@ app.get('/weather', (req, res) => {
         })
     }
 
-    res.send({
-        address: req.query.address,
-        forecast: 'It is currently 20º'
+    let {address} = req.query
+
+    geocode(address, (err, data) => {
+        if(err) {
+            return res.send({err})
+        }
+
+        forecast(data.longitude, data.latitude, (err, forecastData) => {
+            if(err){
+                console.log(err)
+                return res.send({err})
+            }
+
+            return res.send({
+                address,
+                location: data.location,
+                forecast: forecastData
+            })
+        })
     })
+
 })
 
 
