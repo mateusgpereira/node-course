@@ -1,13 +1,34 @@
 const socket = io()
 
+// Elements
 const $msgForm = document.querySelector('#form-msg')
 const $msgFormInput = $msgForm.querySelector('input')
 const $msgFormButton = $msgForm.querySelector('button')
 const $locationButton = document.querySelector('#send-location')
+const $messages = document.querySelector('#messages')
 
+// Templates
+const messageTemplate = document.querySelector('#message-template').innerHTML
+const mapsurlTemplate = document.querySelector('#mapsurl-template').innerHTML
+
+
+const { username, room} = Qs.parse(location.search, { ignoreQueryPrefix: true})
+console.log(username, room)
 
 socket.on('message', (message) => {
-    console.log(message)
+    const html = Mustache.render(messageTemplate, { 
+        message : message.text,
+        createdAt: moment(message.createdAt).format('h:mm a')
+    })
+    $messages.insertAdjacentHTML('beforeend', html)
+})
+
+socket.on('locationMessage', (locationMessage) => {
+    const html = Mustache.render(mapsurlTemplate, {
+        url: locationMessage.url,
+        createdAt: moment(locationMessage.createdAt).format('h:mm a')
+    })
+    $messages.insertAdjacentHTML('beforeend', html)
 })
 
 $msgForm.addEventListener('submit', (e) => {
@@ -43,3 +64,5 @@ $locationButton.addEventListener('click', () => {
         })
     })
 })
+
+socket.emit('join',{ username, room})
